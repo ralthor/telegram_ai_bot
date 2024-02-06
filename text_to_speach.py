@@ -39,6 +39,8 @@ class TextToSpeech:
         response = requests.post('https://api.openai.com/v1/audio/speech', headers=self.headers, data=json.dumps(data))
         with open(file_name, 'wb') as f:
             f.write(response.content)
+        if response.status_code != 200:
+            raise Exception(f"Failed to generate speech: {response.status_code} - {response.text}")
         return response
 
 
