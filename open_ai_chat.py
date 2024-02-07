@@ -4,7 +4,7 @@ from openai import OpenAI
 
 
 class OpenAIChat:
-    PROMPT = {"role": "system", "content": "You are a helpful assistant, responding in a friendly and informative manner, but in short sentences."}
+    PROMPT = {"role": "system", "content": "You are a helpful assistant, responding in a friendly and informative manner, but don't go too long."}
     def __init__(self, chat_limit=10):
         load_dotenv()
         self.client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
