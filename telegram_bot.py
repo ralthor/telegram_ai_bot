@@ -2,7 +2,6 @@
 
 import logging
 import os
-import requests
 from dotenv import load_dotenv
 from pydub import AudioSegment
 from telegram import InputFile
@@ -15,6 +14,7 @@ from telegram.ext import (
 
 from open_ai_chat import OpenAIChat
 from text_to_speach import TextToSpeech
+from utils import download_file
 
 
 logging.basicConfig(
@@ -48,7 +48,7 @@ async def clear_chat(update, context):
         await update.message.reply_text("not allowed...")
         return
     if ai_agent:
-        ai_agent.clear(update.message.from_user.id)
+        await ai_agent.clear(update.message.from_user.id)
         await update.message.reply_text("Chat history cleared")
 
     logger.info(f"User {update.message.from_user.id} cleared chat history")
@@ -82,7 +82,7 @@ async def handle_message(update, context):
         if await is_allowed(update):
             reply_text = "\n".join(config["allowed_users"])
     elif ai_agent:
-            reply_text = ai_agent.generate(text, user_id=update.message.from_user.id)
+            reply_text = await ai_agent.generate(text, user_id=update.message.from_user.id)
 
     await update.message.reply_text(reply_text)
 
@@ -102,21 +102,19 @@ async def voice_handler(update, context):
     mp3_filename = ogg_filename.replace('.oga', '.mp3')
     
     logger.info(f"Downloading voice message to {ogg_filename}")
+    await download_file(file.file_path, ogg_filename)
 
-    # Download voice file using requests
-    response = requests.get(file.file_path, allow_redirects=True)
-    open(ogg_filename, 'wb').write(response.content)
     audio = AudioSegment.from_ogg(ogg_filename)
     audio.export(mp3_filename, format="mp3")
-    text = ai_agent.transcript(mp3_filename)
+    text = await ai_agent.transcript(mp3_filename)
     os.remove(ogg_filename)
     os.remove(mp3_filename)
     await update.message.reply_text(text)
 
-    reply_text = ai_agent.generate(text, user_id=update.message.from_user.id)
+    reply_text = await ai_agent.generate(text, user_id=update.message.from_user.id)
     await update.message.reply_text(reply_text)
 
-    tts.generate(reply_text, file_name=mp3_filename)
+    await tts.generate(reply_text, file_name=mp3_filename)
     with open(mp3_filename, 'rb') as mp3_file:
         await context.bot.send_voice(chat_id=update.message.chat_id, voice=InputFile(mp3_file, filename="response.mp3"))
     os.remove(mp3_filename)
@@ -143,4 +141,4 @@ if __name__ == "__main__":
     app.add_handler(MessageHandler(filters.TEXT, handle_message))
     app.add_handler(MessageHandler(filters.VOICE, voice_handler))
 
-    app.run_polling(poll_interval=5)
+    app.run_polling(poll_interval=2)
