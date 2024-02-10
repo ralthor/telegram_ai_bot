@@ -1,10 +1,9 @@
+import aiohttp
 import json
 import os
-import requests
 from datetime import datetime
 from dotenv import load_dotenv
 from enum import Enum as enum
-
 
 
 class TextToSpeech:
@@ -29,20 +28,21 @@ class TextToSpeech:
             "Content-Type": "application/json"
         }
 
-    def generate(self, text, voice=None, model=None, file_name=None):
+    async def generate(self, text, voice=None, model=None, file_name="speech.mp3"):
         data = {
             "model": model if model else self.model,
             "input": text,
             "voice": voice if voice else self.voice
         }
-        file_name = file_name if file_name else 'speech.mp3'
-        response = requests.post('https://api.openai.com/v1/audio/speech', headers=self.headers, data=json.dumps(data))
-        with open(file_name, 'wb') as f:
-            f.write(response.content)
-        if response.status_code != 200:
-            raise Exception(f"Failed to generate speech: {response.status_code} - {response.text}")
+        async with aiohttp.ClientSession() as session:
+            async with session.post('https://api.openai.com/v1/audio/speech', headers=self.headers, data=json.dumps(data)) as response:
+                if response.status != 200:
+                    text = await response.text()
+                    raise Exception(f"Failed to generate speech: {response.status} - {text}")
+                data = await response.read()
+                with open(file_name, 'wb') as f:
+                    f.write(data)
         return response
-
 
 def convert_day_to_text(day):
     day = int(day)
@@ -61,7 +61,7 @@ def convert_month_to_text(month):
     return months[month - 1]
 
 
-if __name__ == "__main__":
+async def test_tts():
     load_dotenv()
     time_now = datetime.now().strftime("%H and %M minutes and %S seconds.")
     curern_day = datetime.now().strftime("%d")
@@ -70,4 +70,9 @@ if __name__ == "__main__":
     sample_text = f"This is the {convert_day_to_text(curern_day)} of {convert_month_to_text(current_month)}, {current_year}, and time is {time_now}. The quick brown fox jumps over the lazy dog. This is a sample text to test the tts conversion."
 
     tts = TextToSpeech()
-    tts.generate(sample_text, file_name="speech4.mp3")
+    await tts.generate(sample_text, file_name="speech4.mp3")
+
+
+if __name__ == "__main__":
+    import asyncio
+    asyncio.run(test_tts())
