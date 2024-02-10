@@ -1,5 +1,6 @@
 annotated-types==0.6.0
 anyio==4.2.0
+audioread==3.0.1
 certifi==2024.2.2
 charset-normalizer==3.3.2
 colorama==0.4.6
@@ -11,6 +12,7 @@ idna==3.6
 openai==1.11.1
 pydantic==2.6.0
 pydantic_core==2.16.1
+pydub==0.25.1
 python-dotenv==1.0.1
 python-telegram-bot==20.7
 requests==2.31.0
