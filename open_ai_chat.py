@@ -5,12 +5,16 @@ from openai import AsyncOpenAI
 
 class OpenAIChat:
     PROMPT = {"role": "system", "content": "You are a helpful assistant, responding in a friendly and informative manner, but don't go too long."}
-    def __init__(self, chat_limit=10):
+    def __init__(self, chat_limit=10, model="gpt-3.5-turbo"):
         load_dotenv()
         self.client = AsyncOpenAI(api_key=os.getenv('OPENAI_API_KEY'))
         self.users = {}
+        self.chat_limit = chat_limit
+        self.model = model
 
-    async def generate(self, text, user_id=None):
+    async def generate(self, text, user_id=None, model=None):
+        if model is None:
+            model = self.model
         if user_id not in self.users:
             messages = [
                 self.PROMPT,
@@ -20,13 +24,13 @@ class OpenAIChat:
             messages = self.users[user_id] + [{"role": "user", "content": text}]
 
         response = await self.client.chat.completions.create(
-            model="gpt-4",
+            model=model,
             messages=messages,
             )
         if user_id is not None:
             self.users[user_id] = messages + [{"role": "assistant", "content": response.choices[0].message.content}]
-            if len(self.users[user_id]) > 10:
-                self.users[user_id] = [self.PROMPT] + self.users[user_id][-10:]
+            if len(self.users[user_id]) > self.chat_limit:
+                self.users[user_id] = [self.PROMPT] + self.users[user_id][-self.chat_limit:]
         return response.choices[0].message.content
     
     async def clear(self, user_id):
