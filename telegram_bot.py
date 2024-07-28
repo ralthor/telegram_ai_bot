@@ -64,7 +64,7 @@ async def is_allowed(update):
 async def handle_message(update, context):
     logger.info(f"User {update.message.from_user.id} sent a message")
     if not await is_allowed(update):
-        await update.message.reply_text("not allowed...")
+        await update.message.reply_text(f"not allowed from id {update.message.from_user.id}")
         return
 
     text = update.message.text
@@ -81,8 +81,11 @@ async def handle_message(update, context):
     elif text == "list users":
         if await is_allowed(update):
             reply_text = "\n".join(config["allowed_users"])
+    elif text == "reload config":
+        load_config()
+        reply_text = "Config reloaded"
     elif ai_agent:
-            reply_text = await ai_agent.generate(text, user_id=update.message.from_user.id)
+            reply_text = await ai_agent.generate(text, user_id=update.message.from_user.id, model=config["model"])
 
     await update.message.reply_text(reply_text)
 
@@ -120,13 +123,19 @@ async def voice_handler(update, context):
     os.remove(mp3_filename)
 
 
-if __name__ == "__main__":
+def load_config():
     load_dotenv()
+    global config
     config = {
         "token": os.getenv("TELEGRAM_BOT_TOKEN"),
         "password": os.getenv("TELEGRAM_BOT_PASSWORD"),
         "allowed_users": os.getenv("TELEGRAM_BOT_ALLOWED_USERS").split(","),
+        "model": os.getenv("OPENAI_MODEL")
     }
+
+
+if __name__ == "__main__":
+    load_config()
 
     ai_agent = OpenAIChat()
     tts = TextToSpeech()
