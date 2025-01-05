@@ -7,5 +7,5 @@ TELEGRAM_BOT_ALLOWED_USERS=...
 TELEGRAM_BOT_PASSWORD=...
 ```
 
-`TELEGRAM_BOT_ALLOWED_USERS` is a comma-separated list of telegram user ids. Only this users are allowed to use the bot.
-`TELEGRAM_BOT_PASSWORD` is not usable. (it's after checking for allowed users. I don't know if I want to make it work later or not)
+- `TELEGRAM_BOT_ALLOWED_USERS` is a comma-separated list of telegram user ids. Only this users are allowed to use the bot.
+- `TELEGRAM_BOT_PASSWORD` is not usable. (it's after checking for allowed users. I don't know if I want to make it work later or not)
