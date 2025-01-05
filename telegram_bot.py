@@ -14,7 +14,7 @@ from telegram.ext import (
 
 from open_ai_chat import OpenAIChat
 from text_to_speach import TextToSpeech
-from utils import download_file
+from utils import download_file, request_json
 
 
 logging.basicConfig(
@@ -123,6 +123,24 @@ async def voice_handler(update, context):
     os.remove(mp3_filename)
 
 
+async def photo_handler(update, context):
+    logger.info(f"User {update.message.from_user.id} sent a photo")
+    if not await is_allowed(update):
+        await update.message.reply_text("not allowed...")
+        return
+    if ai_agent is None:
+        await update.message.reply_text("AI agent not available")
+        return
+    photo_id = update.message.photo[-1].file_id
+    file_url = f"https://api.telegram.org/bot{config['token']}/getFile?file_id={photo_id}"
+    file_info = await request_json(file_url)
+    file_path = file_info["result"]["file_path"]
+    file_url = f"https://api.telegram.org/file/bot{config['token']}/{file_path}"
+    await ai_agent.add_image(file_url, update.message.from_user.id)
+    # return green checkmark emoji to indicate that the image was successfully processed
+    await update.message.reply_text("\U00002705\U00002705")
+
+
 def load_config():
     load_dotenv()
     global config
@@ -149,5 +167,6 @@ if __name__ == "__main__":
 
     app.add_handler(MessageHandler(filters.TEXT, handle_message))
     app.add_handler(MessageHandler(filters.VOICE, voice_handler))
+    app.add_handler(MessageHandler(filters.PHOTO, photo_handler))
 
     app.run_polling(poll_interval=2)
