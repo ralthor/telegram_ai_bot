@@ -6,3 +6,9 @@ async def download_file(file_path, ogg_filename):
             data = await response.read()
             with open(ogg_filename, 'wb') as f:
                 f.write(data)
+
+
+async def request_json(url):
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            return await response.json()
