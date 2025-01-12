@@ -15,4 +15,15 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag telegram_ai_bot:$(date +%s)
+      run: docker build . --file Dockerfile --tag amin1024/telegram_ai_bot:latest
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Build and Push Docker Image
+      run: |
+        docker build -t amin1024/telegram_ai_bot:latest .
+        docker push amin1024/telegram_ai_bot:latest
